@@ -52,6 +52,9 @@ export default function NotesPage() {
       if (!error) {
         setNewNote({ title: '', content: '' })
         fetchNotes()
+      } else {
+        console.error('Save error:', error)
+        alert(`Failed to save note: ${error.message}. Make sure the 'notes' table is created in Supabase.`)
       }
     }
     setIsAdding(false)

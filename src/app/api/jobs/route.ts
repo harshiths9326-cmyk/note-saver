@@ -8,6 +8,15 @@ const firecrawl = new FirecrawlApp({
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  baseURL: process.env.OPENAI_API_KEY?.startsWith('sk-or-') 
+    ? 'https://openrouter.ai/api/v1' 
+    : undefined,
+  defaultHeaders: process.env.OPENAI_API_KEY?.startsWith('sk-or-')
+    ? {
+        "HTTP-Referer": "http://localhost:3000",
+        "X-Title": "NoteSaver AI",
+      }
+    : undefined,
 })
 
 export async function POST(req: Request) {
@@ -23,19 +32,20 @@ export async function POST(req: Request) {
     // For a broad search, we might use search or map, but here we'll use crawl with a prompt for extraction.
     const searchResults = await firecrawl.search(`${query} jobs in ${location || 'remote'}`, {
       limit: 5,
-      scrapeOptions: {
-        formats: ['markdown'],
-      }
     }) as any
 
-    if (!searchResults.success) {
-      throw new Error('Firecrawl search failed')
+    // If it's a "success: false" but has data, we treat it as success (Firecrawl SDK edge case)
+    if (!searchResults.success && (!searchResults.data || searchResults.data.length === 0)) {
+      console.error('Full Firecrawl Response:', JSON.stringify(searchResults, null, 2));
+      throw new Error(`Firecrawl search failed: ${searchResults.error || searchResults.message || 'Unknown error'}`)
     }
 
+    const dataToProcess = searchResults.data || [];
+
     // Process results with AI to extract structured job data
-    const jobsData = await Promise.all(searchResults.data.map(async (result: any) => {
+    const jobsData = await Promise.all(dataToProcess.map(async (result: any) => {
       const response = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
+        model: "openai/gpt-4o-mini", // Use a cheaper model for structured data
         messages: [
           {
             role: "system",
@@ -43,10 +53,11 @@ export async function POST(req: Request) {
           },
           {
             role: "user",
-            content: result.markdown || result.content || ""
+            content: `URL: ${result.url}\nTitle: ${result.title}\nDescription: ${result.description}\nContent: ${result.markdown || result.content || "N/A"}`
           }
         ],
-        response_format: { type: "json_object" }
+        response_format: { type: "json_object" },
+        max_tokens: 1000,
       })
       
       return JSON.parse(response.choices[0].message.content!)
