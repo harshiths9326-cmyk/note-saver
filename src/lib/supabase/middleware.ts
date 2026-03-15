@@ -58,6 +58,11 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Production log to verify middleware is working
+  if (user) {
+    console.log(`[Middleware] Authenticated user: ${user.email}`)
+  }
+
   // Redirection logic
   const isLoginPage = request.nextUrl.pathname === '/login'
   const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/callback')
