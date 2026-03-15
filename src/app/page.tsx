@@ -17,7 +17,7 @@ export default function Home() {
               </div>
             </div>
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-              Your AI-Powered Productivity Workspace (DEBUG V10)
+              Your AI-Powered Productivity Workspace (DEBUG V11 - ABSOLUTELY LIVE)
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-600">
               Combine note-taking, video summarization, and AI-driven job searching into one seamless experience.
