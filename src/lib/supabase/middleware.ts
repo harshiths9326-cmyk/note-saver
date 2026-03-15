@@ -54,7 +54,26 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // Redirection logic
+  const isLoginPage = request.nextUrl.pathname === '/login'
+  const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/callback')
+
+  if (!user && !isLoginPage && !isAuthCallback) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  // If user is logged in and tries to go to /login, take them home
+  if (user && isLoginPage) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    return NextResponse.redirect(url)
+  }
 
   return response
 }
