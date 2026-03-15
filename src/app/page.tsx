@@ -1,3 +1,5 @@
+'use client'
+
 import { BookOpen, Search, Youtube, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import AuthGuard from '@/components/AuthGuard'
