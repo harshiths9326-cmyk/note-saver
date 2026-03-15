@@ -12,10 +12,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      console.log('[AuthGuard] Checking auth...')
+      const { data: { user }, error } = await supabase.auth.getUser()
+      console.log('[AuthGuard] User:', user?.email || 'none', 'Error:', error?.message || 'none')
       if (!user) {
+        console.log('[AuthGuard] No user, redirecting to /login')
         router.push('/login')
       } else {
+        console.log('[AuthGuard] User found, allowing access')
         setIsAuthenticated(true)
       }
     }
