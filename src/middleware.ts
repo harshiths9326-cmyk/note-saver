@@ -1,15 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
-export async function proxy(request: NextRequest) {
-  // console.log('Proxy Intercepting:', request.nextUrl.pathname) // Uncomment for local debugging if needed
+export default async function middleware(request: NextRequest) {
+  // console.log('[Middleware] Intercepting:', request.nextUrl.pathname)
   const response = await updateSession(request)
   
-  if (response) {
-    return response
-  }
-  
-  return NextResponse.next()
+  return response || NextResponse.next()
 }
 
 export const config = {
