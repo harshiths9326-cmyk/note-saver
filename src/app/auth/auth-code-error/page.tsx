@@ -1,10 +1,11 @@
 'use client'
 
+import { Suspense } from 'react'
 import { AlertCircle, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
-export default function AuthErrorPage() {
+function AuthErrorContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error_description') || searchParams.get('error') || 'An unknown error occurred during authentication.'
 
@@ -34,5 +35,17 @@ export default function AuthErrorPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <AuthErrorContent />
+    </Suspense>
   )
 }
