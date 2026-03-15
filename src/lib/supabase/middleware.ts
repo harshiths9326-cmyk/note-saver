@@ -54,14 +54,18 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const {
+      data: { user },
+      error
+    } = await supabase.auth.getUser()
 
-  // Production log to verify middleware is working
-  if (user) {
-    console.log(`[Middleware] Authenticated user: ${user.email}`)
-  }
+    if (error) {
+      console.error('[Middleware] getUser error:', error.message)
+    }
+
+    // Production log to verify middleware is working
+    console.log(`[Middleware] Path: ${request.nextUrl.pathname}, User: ${user?.email || 'unauthenticated'}`)
 
   // Redirection logic
   const isLoginPage = request.nextUrl.pathname === '/login'
@@ -80,5 +84,9 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  return response
+    return response
+  } catch (err) {
+    console.error('[Middleware] Unexpected error:', err)
+    return response
+  }
 }
