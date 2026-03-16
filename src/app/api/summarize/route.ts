@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { YoutubeTranscript } from 'youtube-transcript';
+import { YoutubeTranscript } from 'youtube-transcript-plus';
 import { extractVideoId } from '@/lib/youtube';
 import { generateSummary, SummaryMode } from '@/lib/gemini';
 
@@ -17,22 +17,33 @@ export async function POST(req: Request) {
     }
 
     let transcriptText = '';
+    
+    // Primary Strategy: youtube-transcript-plus (Currently most reliable)
     try {
-      console.log(`Fetching transcript for video: ${videoId}`);
+      console.log(`Fetching transcript using youtube-transcript-plus for: ${videoId}`);
       const transcript = await YoutubeTranscript.fetchTranscript(videoId);
-      transcriptText = transcript.map((t: { text: string }) => t.text).join(' ');
-    } catch (error: unknown) {
-      console.error('Transcript fetch error:', error);
-      return NextResponse.json({ 
-        error: 'Could not find a transcript for this video. This might be due to disabled captions, age restrictions, or region locks.' 
-      }, { status: 404 });
+      if (transcript && transcript.length > 0) {
+        transcriptText = transcript.map(t => t.text).join(' ');
+      }
+    } catch (e: unknown) {
+      console.error('Transcript fetch failed:', e);
+      const errorMsg = e instanceof Error ? e.message : 'Unknown error';
+      
+      // If it's a known "no transcript" error, provide a specific message
+      if (errorMsg.includes('transcript is disabled') || errorMsg.includes('No transcript found')) {
+          return NextResponse.json({ 
+            error: 'Transcripts are disabled for this video. Please try a video that has closed captions (CC) enabled.' 
+          }, { status: 404 });
+      }
     }
 
     if (!transcriptText) {
-      return NextResponse.json({ error: 'Transcript is empty' }, { status: 404 });
+      return NextResponse.json({ 
+        error: 'Could not extract transcript. This video might be age-restricted, private, or have transcripts disabled by the creator.' 
+      }, { status: 404 });
     }
 
-    console.log(`Generating ${mode} summary using Gemini...`);
+    console.log(`Generating ${mode} summary using Gemini (${transcriptText.length} chars)...`);
     const summary = await generateSummary(transcriptText, mode);
 
     return NextResponse.json({ summary });
