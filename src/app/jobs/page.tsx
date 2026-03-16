@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Briefcase, MapPin, DollarSign, Loader2, Sparkles, ExternalLink } from 'lucide-react'
+import { Search, Briefcase, MapPin, DollarSign, Loader2, Sparkles, ExternalLink, Bookmark, CheckCircle2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import AuthGuard from '@/components/AuthGuard'
+import { createClient } from '@/lib/supabase/client'
 
 interface Job {
   title: string
@@ -19,6 +20,9 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(false)
   const [jobs, setJobs] = useState<Job[]>([])
   const [error, setError] = useState('')
+  const [savingId, setSavingId] = useState<number | null>(null)
+  const [savedIds, setSavedIds] = useState<Set<number>>(new Set())
+  const supabase = createClient()
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,17 +42,40 @@ export default function JobsPage() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setJobs(data.jobs)
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch jobs')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch jobs'
+      setError(message)
     } finally {
       setLoading(false)
     }
   }
 
+  const saveJob = async (job: Job, index: number) => {
+    setSavingId(index)
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (user) {
+      const { error } = await supabase.from('saved_jobs').insert([
+        {
+          user_id: user.id,
+          title: job.title,
+          company: job.company,
+          location: job.location,
+          salary: job.salary,
+          description: job.description
+        }
+      ])
+
+      if (!error) {
+        setSavedIds(prev => new Set(prev).add(index))
+      }
+    }
+    setSavingId(null)
+  }
+
   return (
     <AuthGuard>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* ... existing content ... */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3 mb-4">
             <Briefcase className="text-blue-600 w-10 h-10" />
@@ -133,10 +160,28 @@ export default function JobsPage() {
                   </p>
                 </div>
 
-                <button className="w-full py-3 bg-gray-50 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-100 transition-colors flex items-center justify-center gap-2">
-                  View Details
-                  <ExternalLink className="w-4 h-4" />
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => saveJob(job, idx)}
+                    disabled={savingId === idx || savedIds.has(idx)}
+                    className="flex-1 py-3 bg-blue-50 text-blue-600 rounded-xl font-semibold text-sm hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {savedIds.has(idx) ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        Saved
+                      </>
+                    ) : (
+                      <>
+                        {savingId === idx ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bookmark className="w-4 h-4" />}
+                        Save Job
+                      </>
+                    )}
+                  </button>
+                  <button className="p-3 bg-gray-50 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-100 transition-colors">
+                    <ExternalLink className="w-4 h-4" />
+                  </button>
+                </div>
               </motion.div>
             ))}
           </div>

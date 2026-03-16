@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Highlighter, Sparkles, Loader2, AlertCircle } from 'lucide-react'
+import { Sparkles, Loader2, AlertCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function LoginPage() {
@@ -29,17 +29,18 @@ export default function LoginPage() {
         },
       })
       if (error) throw error
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err)
-      setError(err.message || 'Failed to initialize Google login')
+      const message = err instanceof Error ? err.message : 'Failed to initialize Google login'
+      setError(message)
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-white font-sans">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 flex-col items-center justify-center p-12 text-white">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-700 via-indigo-700 to-violet-800 flex-col items-center justify-center p-12 text-white">
         {/* Background decorative circles */}
         <div className="absolute -top-20 -left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
@@ -51,13 +52,13 @@ export default function LoginPage() {
           className="relative z-10 text-center"
         >
           <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
-              <Highlighter className="w-10 h-10" />
+            <div className="w-20 h-20 bg-white/20 rounded-3xl backdrop-blur-md flex items-center justify-center shadow-2xl border border-white/30">
+              <Sparkles className="w-10 h-10 text-white" />
             </div>
           </div>
-          <h1 className="text-5xl font-extrabold mb-4 tracking-tight">NoteSaver AI</h1>
-          <p className="text-xl text-blue-100 mb-12 max-w-sm mx-auto leading-relaxed">
-            Your all-in-one AI-powered workspace for notes, video summaries, and job searching.
+          <h1 className="text-6xl font-black mb-6 tracking-tighter">NoteSaver<span className="text-blue-200">AI</span></h1>
+          <p className="text-xl text-blue-100 mb-12 max-w-sm mx-auto leading-relaxed font-light">
+            Your premium AI-powered productivity ecosystem for notes, video summaries, and beyond.
           </p>
 
           {/* Feature pills */}
@@ -65,7 +66,7 @@ export default function LoginPage() {
             {['📝 Smart Notes', '📺 YouTube AI', '💼 Job Search', '🔐 Secure'].map((f) => (
               <span
                 key={f}
-                className="px-4 py-2 bg-white/15 rounded-full text-sm font-medium backdrop-blur-sm border border-white/20"
+                className="px-5 py-2.5 bg-white/10 rounded-2xl text-sm font-semibold backdrop-blur-md border border-white/10"
               >
                 {f}
               </span>
@@ -75,7 +76,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-gray-50">
+      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-[#F8FAFC]">
         <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
@@ -83,14 +84,16 @@ export default function LoginPage() {
           className="w-full max-w-md"
         >
           {/* Mobile logo */}
-          <div className="flex items-center gap-2 mb-10 lg:hidden">
-            <Highlighter className="w-7 h-7 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">NoteSaver AI</span>
+          <div className="flex items-center gap-3 mb-12 lg:hidden">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-2xl font-bold text-gray-900 tracking-tight">NoteSaver AI</span>
           </div>
 
-          <div className="mb-10">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back 👋</h2>
-            <p className="text-gray-500">Sign in to access your personal AI workspace.</p>
+          <div className="mb-12">
+            <h2 className="text-4xl font-extrabold text-gray-900 mb-3 tracking-tight">Welcome Back</h2>
+            <p className="text-gray-500 text-lg">Enter your AI workspace to continue creating.</p>
           </div>
 
           {error && (

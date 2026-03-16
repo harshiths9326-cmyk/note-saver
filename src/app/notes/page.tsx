@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Plus, Trash2, StickyNote, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -20,15 +20,11 @@ export default function NotesPage() {
   const [isAdding, setIsAdding] = useState(false)
   const supabase = createClient()
 
-  useEffect(() => {
-    fetchNotes()
-  }, [])
-
-  const fetchNotes = async () => {
-    setLoading(true)
+  const fetchNotes = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('notes')
         .select('*')
         .order('created_at', { ascending: false })
@@ -36,7 +32,12 @@ export default function NotesPage() {
       if (data) setNotes(data)
     }
     setLoading(false)
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchNotes(false)
+  }, [fetchNotes])
 
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault()

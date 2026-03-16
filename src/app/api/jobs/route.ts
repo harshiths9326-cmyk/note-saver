@@ -30,9 +30,9 @@ export async function POST(req: Request) {
     // Use Firecrawl to search and extract job listings
     // Note: Firecrawl's crawl or scrape can be used depending on the goal.
     // For a broad search, we might use search or map, but here we'll use crawl with a prompt for extraction.
-    const searchResults = await firecrawl.search(`${query} jobs in ${location || 'remote'}`, {
+    const searchResults = (await firecrawl.search(`${query} jobs in ${location || 'remote'}`, {
       limit: 5,
-    }) as any
+    })) as { success: boolean; data?: { url: string; title?: string; description?: string; markdown?: string; content?: string }[]; error?: string; message?: string }
 
     // If it's a "success: false" but has data, we treat it as success (Firecrawl SDK edge case)
     if (!searchResults.success && (!searchResults.data || searchResults.data.length === 0)) {
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     const dataToProcess = searchResults.data || [];
 
     // Process results with AI to extract structured job data
-    const jobsData = await Promise.all(dataToProcess.map(async (result: any) => {
+    const jobsData = await Promise.all(dataToProcess.map(async (result: { url: string; title?: string; description?: string; markdown?: string; content?: string }) => {
       const response = await openai.chat.completions.create({
         model: "openai/gpt-4o-mini", // Use a cheaper model for structured data
         messages: [
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
           },
           {
             role: "user",
-            content: `URL: ${result.url}\nTitle: ${result.title}\nDescription: ${result.description}\nContent: ${result.markdown || result.content || "N/A"}`
+            content: `URL: ${result.url}\nTitle: ${result.title || "N/A"}\nDescription: ${result.description || "N/A"}\nContent: ${result.markdown || result.content || "N/A"}`
           }
         ],
         response_format: { type: "json_object" },
@@ -64,8 +64,9 @@ export async function POST(req: Request) {
     }))
 
     return NextResponse.json({ jobs: jobsData })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Job search error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to search jobs' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Failed to search jobs'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

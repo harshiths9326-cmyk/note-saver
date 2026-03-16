@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import NavbarWrapper from "@/components/NavbarWrapper";
+import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: "NoteSaver AI - Ultimate Productivity Suite",
@@ -14,11 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-gray-50 text-gray-900 antialiased font-sans">
-        <NavbarWrapper />
-        <main className="pt-16">
+      <body className="antialiased font-sans">
+        <AppShell>
           {children}
-        </main>
+        </AppShell>
       </body>
     </html>
   );
