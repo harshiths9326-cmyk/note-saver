@@ -21,6 +21,14 @@ export async function createClient() {
             // The `set` method was called from a Server Component.
           }
         },
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: '', ...options })
+          } catch {
+            // The `remove` method was called from a Server Component.
+          }
+        },
+      },
     }
   )
 }
